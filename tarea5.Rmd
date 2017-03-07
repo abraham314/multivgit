@@ -1,0 +1,217 @@
+---
+title: "MDS votaciones"
+author: "yo"
+date: "3 de marzo de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Datos
+
+De la base de votaciones de senadores y partidos tenemos:
+
+```{r Datos}
+senado_votaciones <- readRDS("/home/mb45296/votacionEspacialMexico/source_rds/L63_A2_N1_PO1_RESULTS.RDS")
+
+part<-readRDS('/home/mb45296/votacionEspacialMexico/source_rds/L63_A2_N1_PO1_ASISTENCIA_ASISTENCIA.RDS')
+
+```
+
+## Missings
+
+revisamos la cantidad de datos missing:
+
+```{r missings}
+library(Amelia)
+missmap(senado_votaciones, main="Votaciones", 
+        col=c("yellow", "black"), legend=FALSE) 
+datana<-is.na(senado_votaciones)
+senado_votaciones[datana]<-0
+```
+
+## Variables
+
+Eliminamos variables que no analizaremos:
+
+```{r Variables}
+senadores_votaciones<-senado_votaciones[,-3:-1]
+```
+
+## Centrado y escalamiento de Datos
+
+Eliminamos variables que no analizaremos:
+
+```{r centrado}
+X <- as.matrix(senadores_votaciones)
+X <- scale(X, center = TRUE, scale = TRUE)
+X[1,1:2]
+```
+
+## Distancias
+
+Obtenemos la matriz de distancias entre individuos: 
+$$
+D = 
+ \begin{pmatrix}
+  d_{1,1} & d_{1,2} & \cdots & d_{1,n} \\
+  d_{2,1} & d_{2,2} & \cdots & d_{2,n} \\
+  \vdots  & \vdots  & \ddots & \vdots  \\
+  d_{n,1} & d_{n,2} & \cdots & d_{n,n} 
+ \end{pmatrix}
+$$
+que en este caso n=132.
+```{r dist}
+D <- as.matrix(dist(t(X)))
+```
+
+posteriormente convertimos la matriz de distancias al cuadrado:
+$$
+D2_{i,j}=d_{i,j}^2 \ para\ toda\ i,j
+$$
+```{r square}
+D2 <- D ^2
+D2[1:2,1:2]
+```
+
+## matriz centradora de datos
+
+Utilizamos de la mtriz centradoradora para las distancias al cuadrado:
+$$
+C=I-\frac{1}{n}\mathbf{1}\textbf{1}^\intercal 
+$$
+
+```{r centra}
+n <- nrow(D2)
+ones <- rep(1, n)
+C <- diag(1, n) - (1 / n) * ones %*% t(ones)
+C[1:3,1:3]
+```
+
+
+## matriz doble centradora
+
+
+Utilizamos de la matriz doble centradora:
+$$
+B=-\frac{1}{2}CD_{2}C 
+$$
+
+```{r dcentra}
+B <- - (1 / 2)*C %*% D2 %*% C
+B[1:3,1:3]
+```
+
+
+##Descomposición espectral
+Por el teorma visto en clase sabemos que si B es una matriz semidefinida positiva:
+$$
+B=UG_{2}{U}^\intercal=X{X}^\intercal\\ 
+con\ X=UG_{2}^{\frac{1}{2}}
+$$
+
+```{r espectral}
+## eigen vectores de B
+eigen_decomposition <- eigen(B)
+## eigenvectores
+U <- eigen_decomposition$vectors
+U[1:3,1:3]
+## eigenvalores
+G2 <- diag(eigen_decomposition$values) 
+G2[1:3,1:3]
+## Xstar se compone de eigenvalos y eigenvectores de B
+Xstar <- U %*% (G2 ^ (0.5))
+Xstar[1:3,1:3]
+```
+
+## reducción de dimensiones
+
+obtendremos las coordenadas de cada uno de los senadores con respecto a las primeras 2 dimensiones:
+$$
+X_{k}=U^{[1:k]}(G_{2}^{\frac{1}{2}})_{[1:k]}^{[1:k]} 
+$$
+
+```{r reduccion}
+## reducción de dimensiones
+k <- 2
+
+Xk <- U[, 1:k] %*% (G2 ^ 0.5)[1:k, 1:k]
+Xk[1:5,]
+
+```
+
+## gráfica de datos
+
+```{r graf}
+plot(Xk, xlim = c(-7, 7), ylim = c(-6, 6.5))
+```
+
+## función alterna
+esta es una función de R que genera el mismo proceso que hicimos manualmente, a apartir de la matriz D de distancias:
+
+```{r alterna}
+## alternative: 
+cmds <- cmdscale(D)
+cmds
+plot(cmds)
+```
+
+
+## Calidad de los datos
+con esta métrica tratamos de ver cual es la calidad de los datos:
+$$
+
+M={\frac{\sum_{i=1}^{132}\lambda_{i}}{tr(B)}} \\ 
+con\  \lambda_{i}\ los\ eigenvalores\ de\ B\ i.e.\ los\ elementos\ de\ la\ matriz\ G_{2}
+
+$$
+
+```{r calidad}
+## suma de eigenvalores entre la traza de B: 
+M<-sum(diag(G2))/sum(diag(B))
+M
+```
+
+Agregamos los partidos al dataframe que se genara a partir de Xk
+
+
+```{r partidos}
+## creamos un dataframe de las 2 dimensiones
+mds<-as.data.frame(cmds)
+mds[1:3,]
+##ordenamos los nombres de los senadores por nombre y apellidos
+firstname = sapply(strsplit(rownames(mds), ' '), function(x) {if (is.na(x[4])) {return (x[3])} else if(is.na(x[5])){return (paste(x[3],x[4]))}
+  else if(is.na(x[6])){return(paste(x[3],x[4],x[5]))} else if(is.na(x[7])){return(paste(x[3],x[4],x[5],x[6]))}})
+
+lastname1 = sapply(strsplit(rownames(mds), ' '), function(x) x[1]) 
+lastname2 = sapply(strsplit(rownames(mds), ' '), function(x) x[2])
+mds$SENADOR<-paste(firstname,lastname1,lastname2,sep=" ")
+
+##generamos el catálogo de senadores y partidos
+prt<-unique(part[,2:3])
+
+##pegamos el partido al dataframe mds
+fin<-merge(x = mds, y = prt, by = "SENADOR", all.x = TRUE)
+fin[11,]$PARTIDO<-'PRI'
+fin[15,]$PARTIDO<-'PAN'
+fin[20,]$PARTIDO<-'PAN'
+fin[57,]$PARTIDO<-'PRI'
+fin[69,]$PARTIDO<-'PRI'
+fin[104,]$PARTIDO<-'PAN'
+fin[109,]$PARTIDO<-'PRD'
+fin[120,]$PARTIDO<-'PT'
+fin[131,]$PARTIDO<-'PRI'
+
+```
+
+##GRAFICO 
+Graficamos a los senadores por distinguidos por su partido en las 2 primeras dimensiones:
+```{r grafico}
+library('ggplot2')
+pl<-ggplot(fin, aes(x=V1, y=V2,text = paste(SENADOR))) + geom_point(aes(color=PARTIDO)) + 
+  scale_color_manual(values=c("blue", "yellow", "green","red","orange","gray","black"))
+
+print(pl)
+```
