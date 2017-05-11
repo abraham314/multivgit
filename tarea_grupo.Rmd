@@ -1,0 +1,158 @@
+---
+title: "ACM"
+author: "yo"
+date: "19 de marzo de 2017"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+header-includes: \usepackage{bbm}
+---
+##Análisis de correspondencias múltiples
+
+ACM Puede ser visto como una extensión del análisis de correspondencias simple (AC) para un conjunto grande de variables categóricas, supongamos que la matriz de datos categóricos es $NxQ$ es decir, $N$ individuos y $Q$ variables, el análisis de correspondencias múltiple(ACM) tiene 2 versiones. En la primera transformamos los casos clasificados por variables en una matriz binaria $Z=[Z_{1},Z_{2},...,Z_{Q}]$ donde $Z_{i}$ es una matriz de $NxJ_{q}$ donde $q={1,2,...,Q}$ tal que 
+$$
+ z_{ij_{q}} = \left \{ \begin{matrix} 1 & \mbox{si }\mbox{el i-ésimo individuo tiene la categoría j de la variable q}
+\\ 0 & \mbox{si }\mbox{el i-ésimo individuo no tiene la categoría j de la variable q}\end{matrix}\right. 
+$$, en la que recodificamos los datos categóricos como variables binarias. Si la variable $q-ésima$ tiene $J_{q}$ categorías, esta matriz binaria tendrá $J= \ [  \sum_{q}J_{q} \ ]$
+columnas, a partir de $Z$ se puede tomar como tabla de contingencia y aplicar el análisis de correspondencias simple.
+$$
+Z=\left(
+\begin{array}{c|ccc}
+&1&2\cdots&J_{1}\cdots\cdots&1&2\cdots&J_{q}\\
+\hline
+I_{1}&1&0\cdots &1\cdots\cdots&0&1\cdots&1\\ I_{2}&0&1\cdots &0\cdots\cdots&1&0\cdots&1\\
+\vdots & &\ddots & \ddots & & \ddots\\ 
+I_{N}&0&1\dots &1\cdots\cdots&1&0\cdots&0\\
+\end{array}
+\right)
+$$
+
+La segunda versión, consiste en calcular la matriz de Burt $B=Z^{T}Z$ la cual resulta de todas las
+posibles tablas de contingencia las $Q$ variables.
+$B$ se construye por superposición de cajas. En los bloques diagonales aparecen matrices diagonales conteniendo las frecuencias marginales de cada una de las variables analizadas. Fuera de la diagonal aparecen las tablas de contingencia correspondientes a todas las combinaciones 2 a 2 de las variables analizadas.
+
+por ejemplo:
+
+
+| Individuos | Género | Años | Ingreso |
+|:----------:|:------:|:----:|:-------:|
+|      1     |  Mujer |   5  |  Medio  |
+|      2     |  Mujer |   3  |   Alto  |
+|      3     | Hombre |   4  |   Bajo  |
+|      4     |  Mujer |   1  |   Bajo  |
+|      5     |  Mujer |   2  |  Medio  |
+|      6     | Hombre |   5  |   Alto  |
+|      7     |  Mujer |   2  |  Medio  |
+|      8     | Hombre |   3  |   Bajo  |
+|      9     | Hombre |   1  |   Alto  |
+|     10     |  Mujer |   4  |  Medio  |
+
+A partir de esta tabla se construye la tabla de dummies $Z$  
+
+| Género |        | Años |   |   |   |   | Ingresos |       |      |
+|:------:|--------|:----:|---|---|---|---|:--------:|-------|------|
+| Mujer  | Hombre |    1 | 2 | 3 | 4 | 5 | Bajo     | Medio | Alto |
+|      1 |      0 |    0 | 0 | 0 | 0 | 1 |        0 |     1 |    0 |
+|      1 |      0 |    0 | 0 | 1 | 0 | 0 |        0 |     0 |    1 |
+|      0 |      1 |    0 | 0 | 0 | 1 | 0 |        1 |     0 |    0 |
+|      1 |      0 |    1 | 0 | 0 | 0 | 0 |        1 |     0 |    0 |
+|      1 |      0 |    0 | 1 | 0 | 0 | 0 |        0 |     1 |    0 |
+|      0 |      1 |    0 | 0 | 0 | 0 | 1 |        0 |     0 |    1 |
+|      1 |      0 |    0 | 1 | 0 | 0 | 0 |        0 |     1 |    0 |
+|      0 |      1 |    0 | 0 | 1 | 0 | 0 |        1 |     0 |    0 |
+|      0 |      1 |    1 | 0 | 0 | 0 | 0 |        0 |     0 |    1 |
+|      1 |      0 |    0 | 0 | 0 | 1 | 0 |        0 |     1 |    0 |
+En la tabla disyuntiva completa (matriz $Z$), si hay alguna variable continua, debe transformarse en nominal, ordenándose en intervalos a los que se da un rango de valores.
+
+Las frecuencias marginales de las líneas de la tabla disyuntiva completa son iguales al número
+de variables ($Q$), y las frecuencias marginales de las columnas corresponden al número de individuos que han elegido la categoría ($j$) de la variable ($q$), por lo que para cada submatriz, el número total de individuos es $N$.
+
+$$
+Z=\left(
+\begin{array}{c|ccc}
+&M&H\ &&1&2&3&4&5\ &&B&M&A\\
+\hline
+I_{1}&1&0\ &&0&0&0&0&1\ &&0&1&0\\ I_{2}&1&0\ &&0&0&1&0&0\ &&0&0&1\\
+\ & &\ & \\ 
+I_{3}&0&1\ &&0&0&0&1&0\ &&1&0&0\\
+I_{4}&1&0\ &&1&0&0&0&0\ &&1&0&0\\
+I_{5}&1&0\ &&0&1&0&0&0\ &&0&1&0\\
+I_{6}&0&1\ &&0&0&0&0&1\ &&0&0&1\\
+I_{7}&1&0\ &&0&1&0&0&0\ &&0&1&0\\
+\ & &\ & \\ 
+I_{8}&0&1\ &&0&0&1&0&0\ &&1&0&0\\
+I_{9}&0&1\ &&1&0&0&0&0\ &&0&0&1\\
+I_{10}&1&0\ &&0&0&0&1&0\ &&0&1&0\\
+\end{array}
+\right)
+$$
+La matriz $Z$ está dividida por las variables dummies de las 3 categorías, Género(M,H), Años(1,..5) e Ingresos(B,M,A).
+
+Relacionando cada variable con todas las demás la tabla disyuntiva se convierte a una tabla de Burt
+que contiene todas las tablas de contingencia simples entre las variables (cruzadas dos a dos).
+A partir de la tabla disyuntiva completa se puede construir la tabla de contingencia de Burt ($B$), que
+es una tabla simétrica de orden $JxJ: B = Z^{T}Z$ 
+
+$B$ es una conjunción de tablas de contingencia y está formada de $Q^2$ bloques y cada bloque es una submatriz formada por tablas de contingencia de las variables dos a dos, salvo  los bloques que se están en la diagonal que son las tablas de contingencia de cada variable consigo misma.
+
+con lo cual la matriz de Burt es : 
+![](/home/abraham/Descargas/tab2.png) 
+
+Una propiedad que se cumple para la extensión del ACS en ACM:
+es equivalente un ACS de la tabla de contingencia entre $Y$ y $X$
+que analizar la tabla disyuntiva $Z$ (de $N$ filas e $J$ columnas)
+o analizar la tabla de Burt de $J$ filas y $J$ columnas
+La tabla disyuntiva completa es equivalente a la tabla de Burt y ambos producen los mismos
+factores.
+
+Inercias de $Z$.
+
+Para la matriz $Z$ tenemos que la matriz de probabilidades es $P=\frac{Z}{NN}$ donde $NN=\sum_{ik}z_{ik}$ y sea $r$ el vecor de totales por renglones tal que $r=Z1$ donde $1$ es el vector de 1's, y sea $c$ el vector de totales por columna y sea  $D_{c}=diag(c)$  y $D_{r}=diag(r)$ los factores o scores en este caso se obtienen de la descomposición en valores singulares de la matriz:
+$$
+D_{r}^{-\frac{1}{2}}(P-rc^{T})D_{c}^{-\frac{1}{2}}=U\Delta V^{T}
+$$
+con $\Delta$ la matriz diagonal de los valores singulares y $\Lambda=\Delta^{2}$ es la matriz d eigenvalores.
+Por tanto los scores de los reglones y las columnas son:
+$$
+F=D_{r}^{-\frac{1}{2}}U\Delta\ y\ G=D_{c}^{-\frac{1}{2}}V\Delta
+$$
+
+
+Inercias de la tabla de Burt
+
+Análogamente para la matriz d Burt $B$ tenemos $P=\frac{B}{\sum_{ij}b_{ij}}$  Como en la tabla de Burt las filas y las columnas representan las mismas categorías, el estudio de
+ambas ofrecen los mismos resultados, lo único a ajustar son los eigenvalores de $B$ que cumplen la siguiente realción con los eigenvalores de $Z$:
+$$
+\lambda_{B}=\lambda_{Z}^{2}
+$$
+
+
+Al igual que en ACS podemos ver los factores por variable y la finalidad es poder pintarlos juntos para hacer una interpretación de todas las categorías.
+
+![](/home/abraham/vars.png)![](/home/abraham/Descargas/tog.png)
+
+INTERPRETACIÓN de ACM:
+
+1) Dos individuos están próximos si han elegido globalmente las mismas categorías
+
+2) Dos categorías están próximas si han sido elegidas globalmente por el mismo conjunto 
+de individuos.
+
+3) La interpretación de los factores se hace teniendo en cuenta las contribuciones totales 
+de cada variable.
+```{r a}
+
+```
+
+
+```{r b}
+
+```
+
+
+
+```{r c}
+
+```
+

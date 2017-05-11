@@ -1,0 +1,134 @@
+---
+title: "preg3"
+author: "clase"
+date: "9 de abril de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#pregunta 3
+a)
+A grandes rasgos tenemos los siguientes tipos
+Binarias/Booleanas 
+(YES/NO, HOMBRE/MUJER, TRUE/FALSE, 0/1)
+ Datos categóricos o nominales: más categorías
+(nivel socioeconómico,raza de perros)
+ Para poder comparar 2 vectores de datos categóricos o booleanos podemos utilizar métricas de disimilardad, por ejemplo la distancia de Hamming donde se compara el número de entradas en las mismas posiciones que son distintas, entre más cerca del cero más parecidos son los vectores.
+ 
+ Datos ordinales y de intervalo: como categóricos pero existe un orden
+ (alto/medio/bajo)
+Para el caso de las variables númericas de intevalo establecen un orden o jerarquía entre categorías y las distancias entre cada intervalo son iguales entonces podemos tratar ambos tipos de variables (ordinal y de intervalo) de la misma forma en tema de distancias y de acuerdo con la definición de las distancias de Gower podemos definir la distancia entre 2 observaciones de una misma variable como el valor absoluto de la diferencia entre ellas entre el rango de la variable recordar que al poderse jerarquizar las categorías podemos rankearlas y por tanto usar números:
+```{r}
+library(cluster)
+cc<-ordered(c(1,9,2),levels=c(1:10))
+cc
+daisy(cbind(cc),metric="gower")
+```
+utilizamos la funcion daisy que está en la librería cluster para mostrar como se dan estas distancias, ejemplo la distancia de la observación 1 a la 3 es 0.125 y se calculó haciendo |1-2|/8 ya que 8 es el rango de la columna.
+
+ahora si vemos los datos como vector...
+```{r}
+
+aa<-ordered(c(2,4,5),levels=c(1:10))
+bb<-ordered(c(5,7,2),levels=c(1:8))
+zw<-cbind(aa,bb,cc)
+zw
+daisy(zw,metric="gower")
+```
+entonces para el cálculo de la distancia entre el primer y tercer individuo se hicieron las diferencias en cada variable por tanto |2-5|/3=1, |5-2|/5=0.6,|1-2|/8=0.125, y promediando...tenemos que la distancia es 0.575 como lo muestra la función. 
+ 
+ Datos numéricos
+ Con escala de razón: los campeones, y=2*x significa que y es dos veces más que x
+ Continuas. E.g. Ingreso, tamaño, peso, precio, datos de conteo
+ Conteo: E.g. # accidentes
+ para estos dato existenmúltiples formas de medir distancias como la distancia euclidena, euclidiana ponderada etc.
+ 
+b)
+Ya sea para el caso simple o múltiple, dado que los datos que se usan para el AC son nominales se deben construir una tabla de contingencia en el caso simple o una tabla de burt en el múltiple donde cada celda representa el conteo por renglonnes dividido por la suma de estos y para poder medir distancias adecuadamente entre cada perfil de fila, necesitamos medir la diferencia en distribución pesada inversamente proporcional al peso o masa de cada columna. Esto se conoce como distancia chi-cuadrada donde esta se define como $d_{ij}=\sum_{h=1}^{m}{\frac{1}{N_{*h}}}[{\frac{n_{ih}}{N_{i*}}}-{\frac{n_{jh}}{N_{j*}}}]^2$ con $m$ el numero de   columnas en la tabla de contingencia $n_{kh}$ el número de observaciones del renglón $k$ en la columna $h$, $N_{i*}$ es la suma todo el renglón $i$ y finalmente ${\frac{1}{N_{*h}}}$ es el peso o masa de la columna $h$.
+Análogamente las dstancias por columna se calculan de la misma forma con $d_{ij}^c=\sum_{h=1}^{k}{\frac{1}{N_{h*}}}[{\frac{n_{hi}}{N_{*i}}}-{\frac{n_{hj}}{N_{*j}}}]^2$ donde $k$ es el número de renglones.
+La  distancia chi‐cuadrado  cumple el principio de la  equivalencia distribucional , que postula que si dos
+categorías tienen perfiles idénticos pueden ser sustituidas por una sola categoría que sea la suma de
+sus pesos, sin que con ello se modifique la distancia entre las filas o columnas. La importancia de
+esta propiedad estriba en que garantiza la estabilidad en los resultados con independencia de la
+codificación en las variables; de modo que es posible agrupar categorías que tienen perfiles
+coincidentes, tanto por filas como por columnas. Si el resultado se mantiene estable tras unir
+categorías, de igual modo estos resultados no mejoran al realizar más subdivisiones de categorías
+homogéneas.
+
+c)
+sea $d^2(x,y)=(x-y)^TW(x-y)$ con $W=diag(W_{i})$ y $W_{i}=(w_{1},w_{2},...,w_{n})$ entonces podemos representar $d^2(x,y)=(x-y)^TW(x-y)=\sum_{i=1}^nw_{i}(x_{i}-y_{i})^2$ esto no es otra cosa que una distancia euclidiana ponderada.
+Geométricamente, podríamos ver la situación anterior de esta manera.
+![](/home/abraham/Descargas/euclid.png)
+Esta imagen representa un espacio físico tridimensional aquí las distancias entre puntos son distancias euclidianas clásicas.
+las marcas que indican las escalas (por ejemplo, los valores 0,1; 0,2; 0,3; etc.) se
+hallan separadas a intervalos iguales; 
+![](/home/abraham/Descargas/chi.png)
+
+sin embargo, como indica la imagen  utilizar las distancias euclidianas ponderadas provocan una EXTENSIÖN de los tres vértices y de los puntos en el espacio con escalas distintas en los tres ejes.  
+La forma en que variaría las medias de las distancias con respecto a las euclidianes es que la media en este caso es un promedio ponderado $\sum_{i}{\frac{w_{i}x_{i}}{w_{i}}}$ y las covarianzas es la mediaponderada de la suma de los cuadrados de estas distancias(ponderadas).
+Notar que la distancia $\chi^2$ es un caso particular de la distancia euclidiana ponderada ya que 
+$d_{ij}^c=\sum_{h=1}^{k}{\frac{1}{N_{h*}}}[{\frac{n_{hi}}{N_{*i}}}-{\frac{n_{hj}}{N_{*j}}}]^2$ podemos pensar en $W=diag({\frac{1}{N_{h*}}})$.
+
+
+
+d)
+La distancia chi‐cuadrado cumple también el principio de equivalencia distribucional, que postula
+que si dos categorías tienen perfiles idénticos pueden ser sustituidas por una sola categoría que sea
+la suma de sus pesos, sin que con ello se modifique la distancia entre las filas o columnas.
+Esta propiedad garantiza la estabilidad de los resultados con independencia de la codificación de las
+variables, de modo que es posible agrupar categorías que tienen perfiles coincidentes tanto por filas
+como por columnas. Si el resultado se mantiene estable tras unir categorías, de igual forma estos
+resultados no mejoran al realizar más subdivisiones de categorías homogéneas, al final cada renglón,al ser frecuencias, representa una distribución condicional y no un individuo entonces naturalmene el estadístico $\chi^2$ funciona para hacer distancias entre distribuciones.
+Ejemplo:
+Tomemos la base de datos Housestacks que se refiere a las tareas del hogar como categorías renglones y columnas es quién las realiza...
+
+```{r 3}
+library(ggplot2)
+library(factoextra)
+library(car)
+data(housetasks)
+new<-head(housetasks)
+new 
+
+```
+```{r}
+# Row margins
+row.sum <- apply(new, 1, sum)
+
+# Column margins
+col.sum <- apply(new, 2, sum)
+ 
+row.profile <- new/row.sum
+row.profile
+```
+
+revisando la distribución por renglones digamos los 2 primeros renglones Laundry y Main_meal haciendo la división por la suma de cada una de sus filas podemos ver la distribución de cada uno de forma visual:  
+```{r 4}
+library("gplots")
+# 1. convert the data as a table
+dt <- as.table(as.matrix(row.profile))
+# 2. Graph
+balloonplot(t(dt), main ="housetasks", xlab ="", ylab="",
+            label = FALSE, show.margins = FALSE)
+```
+
+este gráfico muestra por ejemplo la dstribución relativa entre cada renglón por ejemplo los primero 2 que mencionamos a simple vista parecen ditribuirse de la misma forma ya que las proporciones(tamaño del círculo) de los renglones por cada columna son muy parecidos, en cambio si comparamos la categoría laundry con dishes parecen ser distintos.
+finalmente lo que estamos comparando en cada reglón o columna son distribuciones entre ellas por tanto la distancia $\chi^2$ es naturalmente la medida de distancia entre las distribuciones.
+ y si calculamos la distancia $\chi^2$ etre los 2 primeo renglones tenemos que:
+ 
+```{r}
+n <- sum(housetasks)
+# Column sums
+col.sum <- apply(housetasks, 2, sum)
+# average row profile = Column sums / grand total
+average.rp <- col.sum/n 
+# Laundry and Main_meal profiles
+laundry.p <- row.profile["Laundry",]
+main_meal.p <- row.profile["Main_meal",]
+# Distance between Laundry and Main_meal
+d2 <- sum(((laundry.p - main_meal.p)^2) / average.rp)
+d2
+```
+la distancia es 0.03 lo cual confirma la gráfica. 

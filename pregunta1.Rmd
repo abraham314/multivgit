@@ -1,0 +1,74 @@
+---
+title: "Pregunta1"
+output:
+  html_document: default
+  html_notebook: default
+---
+a)
+Introducción, la idea es conectar la descomposión espectral de la matriz de varianzas como una alternativa a encontrar los ejes nuevos de una elipse rotada así como el valor de los semiejes de tal modo que la forma cuadrática de la varianza sea equivalente a la ecuación de una elipse con centro en los nuevos ejes.
+primero sea 
+$$\Sigma =\begin{pmatrix} 
+\sigma_{x}^2 & \sigma_{xy} \\
+\sigma_{xy} & \sigma_{y}^2 
+\end{pmatrix}
+\quad
+$$
+la matriz de varianzas y covarianzas de las variables $x,y$ , de forma más simple veamos la curva de nivel 1 de la forma cuadrática de la matriz, entonces $x^T \Sigma x=1$ significa en términos más simples $x^2\sigma_{x}^2+2xy\sigma_{xy}+y^2\sigma_{y}^2=1$  y esta expresión  no es otra cosa más que la ecuación de una elipse ROTADA.
+
+Por otro lado sabemos que $\Sigma$ al ser simétrica se puede descomponer de forma espectral tal que 
+$\Sigma=PDP^T$ donde $P$ contiene los eigenvectores  y $D$ es la matriz diagonal de eigenvalores de $\Sigma$ si trasladamos esto a la forma cuadrática $x^T \Sigma x=1$ podemos reescribirla como 
+$x^T \Sigma x=x^T PDP^Tx=(P^Tx)D(P^Tx)=x'^TDx'=1$ donde $x'$ no es otra cosa que la representación de los ejes rotados, entonces la nueva forma cuadrática $x'^TDx'=1$ representa ahora una ecuación del tipo $\lambda_{1}x'^2+\lambda_{2}y'^2=1$ que es la ecuación de la elipse con centro en el "origen" de los nuevos ejes donde $\lambda_{1},\lambda_{2}$ representan la varianza de $x',y'$ con $\lambda_{1},\lambda_{2} =\sigma_{x'}^2,\sigma_{y'}^2$.
+
+También sabemos que la descomposición espectral lo que hace es diagonalizar la matriz $\Sigma$ de tal modo que $D=P^T \Sigma P=$.
+
+Por los puntos anteriormente expuestos  podemos conectar que en el caso bidimensional la descomposición espectral de la matriz $\Sigma$ nos da la rotación y dirección de los nuevos ejes usando los eigenvectores de la matriz $P$ y las magnitudes o eigenvalores $diag(D)$ con 
+$$
+D=\begin{pmatrix} 
+\sigma_{x'}^2 & 0\\
+0& \sigma_{y'}^2 
+\end{pmatrix}
+\quad
+$$
+de tal modo que la diagonalización de $\Sigma$ nos lleva a encontrar la matriz de rotación de los ejes $P$ tal que se dé la relación 
+$$
+(x,y)=P(x',y')
+$$
+y esta matriz 
+$$
+P=\begin{pmatrix} 
+cos\theta & -sen\theta\\
+sen\theta& cos\theta 
+\end{pmatrix}
+\quad
+$$
+
+Finalmente si tomamos como referencia la ecuación de la elipse en los nuevos ejes tendríamos una ecuación del estilo ${\frac{x'^2}{a^2}}+{\frac{y'^2}{b^2}}=1$ donde $a,b$ son los semiejes de la elipse pero en este caso representan la raíz de la magnitud de los eigenvectores($\sigma_{x'}$ si la distribución de los puntos es normal bivariada) o aprox. entonces podríamos escribir la ecuación de la elipse como ${\frac{x'^2}{\sigma_{x'}^2}}+{\frac{y'^2}{\sigma_{y'}^2}}=1$.
+
+![](/home/abraham/Descargas/1a.jpg)
+
+Conclusión descomponer la matriz de varianzas bidimensional en su forma espectral nos da los nuevos ejes de una elipse rotada así como la magnitud de sus semiejes que no es otra cosa que las desviaciones estándar(ó un múltiplo de ella)de este modo podemos expresar la ecuación de una elipse rotada como descomposición espectral. 
+
+
+b)
+
+
+![](/home/abraham/Descargas/SVD.png)
+la interpetación geométrica de SVD no es otra más que como se muestra en la figura, vemos que multiplicar por la matriz $V^*$ ortogonal  significa una rotación de ejes, luego al multiplicar por la matriz diagonal $\Sigma$ lo que sucede es un redimensionamiento de los ejes canónicos y finalmente al multiplicar por $U$ se hace una rotación nuevamente pero de la elipse.
+análogamente sucede similar para el tema de diagonalización
+
+
+
+
+
+c)
+Suponiendo que la matriz A es centrada y $\Sigma(A)={\frac{1}{n}}A^TA$, entonces sea la descomposición SVD de $A=U \Sigma V^T$ tal que $U,V$ son matrices ortogonales y $\Sigma$ es una matriz casi diagonal salvo por el excedente de dimensiones y con diagonal  mayor que cero.
+entonces 
+$$\Sigma(A)={\frac{1}{n}}A^TA={\frac{1}{n}}(U \Sigma V^T)^T(U \Sigma V^T)\\
+={\frac{1}{n}}V \Sigma^T (U^TU) \Sigma V^T\ \  \ \ (U^TU)=I\ \ por\ ortogonalidad\\
+={\frac{1}{n}}V \Sigma^T  \Sigma V^T\\ 
+entonces\ {\frac{1}{n}}A^TA={\frac{1}{n}}V \Sigma^T  \Sigma V^T\\
+y\ V^TA^TAV=\Sigma^T \Sigma
+$$
+y dado que $\Sigma$ es una matriz de $mxn$ diagonal entonces $\Sigma^T \Sigma$ es una matriz diagonal de $nxn$ cuyas entradas diagonales son las mismas de $\Sigma$ pero al cuadrado.
+entonces se ha encontrado una diagonalización de la matriz ${\frac{1}{n}}A^TA$ y los eigenvalores correspondientes son ${\frac{\lambda_{i}^2}{n}}=(\Sigma^T \Sigma)_{ii}$ y por tanto $(\Sigma_{ii}={\frac{\lambda_{i}}{\sqrt n}})$ entonces los valores de  la matriz $\Sigma$ de valores singulares de $A$  son las raices de los valores positivos de $\Sigma(A)$ notar que las columnas de $V$  son los eigenvectores de $\Sigma(A)$ puesto que dado que $V^TA^TAV=\Sigma^T \Sigma$ entonces $A^TAV=\Sigma^T \Sigma V$.
+por tanto la relación de SVD de $A$ y la diagonalización de su matriz de covarianzas es que $V$ es la matriz de eigenvectores de $\Sigma(A)$ y los eigenvalores de $\Sigma(A)$ son el cuadrado de los valores singulares de $A$. 

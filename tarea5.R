@@ -1,26 +1,35 @@
 devtools::install_github("mauriciogtec/metodosMultivariados2017", build_vignettes= TRUE) 
 library(metodosMultivariados2017)
-senado_votaciones <- readRDS("/home/mb45296/votacionEspacialMexico/source_rds/L63_A2_N1_PO1_RESULTS.RDS")
+load("/home/mb45296/R/x86_64-pc-linux-gnu-library/3.3/metodosMultivariados2017/data/senado_votacion.rda")
+senado_votaciones <-senado_votacion 
+load("/home/mb45296/R/x86_64-pc-linux-gnu-library/3.3/metodosMultivariados2017/data/senado_partidos.rda")
 
-part<-readRDS('/home/mb45296/votacionEspacialMexico/source_rds/L63_A2_N1_PO1_ASISTENCIA_ASISTENCIA.RDS')
+#eliminamos los renglones informativos
+senado<-senado_votaciones[,-3:-1]
+#guardamos el vector de asuntos para hacerlos columnas
+colt<-senado_votaciones$ASUNTO
+#genramos el dataframe transpuesto
+trnew<-as.data.frame(t(senado))
+#nombres de las columnas relacionados con asunto
+colnames(trnew)<-colt
+
+
 
 library(Amelia)
-missmap(senado_votaciones, main="Votaciones", 
-        col=c("yellow", "black"), legend=FALSE)
+missmap(trnew, main="Votaciones", 
+        col=c("yellow", "black"), legend=FALSE) 
+datana<-is.na(trnew)
+trnew[datana]<-0
 
 
-datana<-is.na(senado_votaciones)
-senado_votaciones[datana]<-0
-
-senadores_votaciones<-senado_votaciones[,-3:-1]
 ## center and scale
-X <- as.matrix(senadores_votaciones)
+X <- as.matrix(trnew)
 X <- scale(X, center = TRUE, scale = TRUE)
 X
 
 
 ## distance matrix
-D <- as.matrix(dist(t(X)))
+D <- as.matrix(dist(X))
 ## squared distance
 D2 <- D ^2
 D2
@@ -55,69 +64,25 @@ k <- 2
 Xk <- U[, 1:k] %*% (G2 ^ 0.5)[1:k, 1:k]
 Xk
 
-plot(Xk, xlim = c(-7, 7), ylim = c(-6, 6.5))
+plot(Xk, xlim = c(-7.5, 11.5), ylim = c(-6, 10))
 text(x = Xk[, 1] -0.7, y = Xk[, 2], rownames(t(X)))
 
-## alternative: 
+## alternativo: 
 cmds <- cmdscale(D)
 cmds
 plot(cmds)
 
+#varianza explicada
+(G2[1,1]+G2[2,2])/sum(diag(G2))
 
-
-dist<-dist(t(senadores_votaciones))
-
-dist<-as.matrix(dist)
-
-
-
-
-
-
-
-mds<-cmdscale(dist)
-
-
-ggplot(as.data.frame(mds), aes(V1, -V2, label = rownames(mds))) +     
-  geom_text(check_overlap = TRUE) + theme_minimal() + xlab('') + ylab('') +
-       scale_y_continuous(breaks = NULL) + scale_x_continuous(breaks = NULL)
-
-
-
-www$SENADOR<-rownames(www)
-firstname = sapply(strsplit(www$SENADOR, ' '), function(x) x[3]) 
-lastname1 = sapply(strsplit(www$SENADOR, ' '), function(x) x[1]) 
-lastname2 = sapply(strsplit(www$SENADOR, ' '), function(x) x[2])
-www$SENADOR<-paste(firstname,lastname1,lastname2,sep=" ")
-
-ggplot(fin,aes(V1,-V2,label=PARTIDO))+geom_point(aes(color=PARTIDO))
-
+mds<-as.data.frame(cmds)
+mds$SENADOR<-rownames(cmds)
+fin<-merge(x = mds, y = senado_partidos, by = "SENADOR", all.x = TRUE)
 
 pl<-ggplot(fin, aes(x=V1, y=V2,text = paste(SENADOR))) + geom_point(aes(color=PARTIDO)) + 
-  scale_color_manual(values=c("blue", "yellow", "green","red","orange","gray","black"))
+  scale_color_manual(values=c("blue", "yellow", "green","red","orange","gray","black"))+
+  geom_vline(xintercept = 0)+geom_hline(yintercept = 0)
 
 print(pl)
-
-
-
-fin[11,]$PARTIDO<-'PRI'
-fin[15,]$PARTIDO<-'PAN'
-fin[20,]$PARTIDO<-'PAN'
-fin[57,]$PARTIDO<-'PRI'
-fin[69,]$PARTIDO<-'PRI'
-fin[104,]$PARTIDO<-'PAN'
-fin[109,]$PARTIDO<-'PRD'
-fin[120,]$PARTIDO<-'PT'
-fin[131,]$PARTIDO<-'PRI'
-
-
-firstname = sapply(strsplit(rownames(mds), ' '), function(x) {if (is.na(x[4])) {return (x[3])} else if(is.na(x[5])){return (paste(x[3],x[4]))}
-  else if(is.na(x[6])){return(paste(x[3],x[4],x[5]))} else if(is.na(x[7])){return(paste(x[3],x[4],x[5],x[6]))}})
-
-lastname1 = sapply(strsplit(rownames(mds), ' '), function(x) x[1]) 
-lastname2 = sapply(strsplit(rownames(mds), ' '), function(x) x[2])
-mds$SENADOR<-paste(firstname,lastname1,lastname2,sep=" ")
-
-
 
 

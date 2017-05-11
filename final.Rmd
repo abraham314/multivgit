@@ -1,0 +1,264 @@
+---
+title: "final"
+author: "yo"
+date: "3 de mayo de 2017"
+output: html_document
+---
+Planteamiento del problema.
+Se quiere hacer una campaña para colocar préstamos de crédito para los clientes de un banco, hoy día la selección de estos clientes está basada  en criterios simples como por ejemplo aquellos que de acuerdo con los datos qe se tienen son los que tienen menor liquidez esto conlleva a preguntarse si los clientes seleccionados son los correctos de acuerdo con una métrica como la efectividad dela camapaña, entonces es obvio que no se disponen de modelos de cálculo de propensiones para predecir quiénes son los clientesque les interesa contratar los préstamos, entonces como objetivo se busca construir un clasificador que pueda mejorar la efectividad de la campaña haciendo una selección intligente.
+Se realizará un modelo que sea capaz de predecir la propensión que tiene cada cliente de aceptar la campaña. la idea es que este modelo pueda proporcionar una lista de clientes que sean los más adecuados a aceptar los préstamos que el banco les ofrece utilizando una base de datos conformada principalmente por datos de saldos del cliente en el tiempo, asíc cómo saldos en los distintos productos de activo y pasivo con los que cuentan hoy dentro del banco, además de variables nominales como el sexo, estado de la república al que pertenece etc.
+se tienen más de 100 variables disponibles independientes y una varaiable dependiente que es la marca si los clientes que tenemos en la base han contratado algún préstamo analizando la información del último año, y la idea es qu con la construción de este podamos calificar a los clientes propensos para aceptar uturas campañas.
+Dado el alto número de variables es natural pensar en analizar la reducción de variables para poder hacer el clasificador utilizando el menor número de variables sin perder información, entonces dado que tenemos variables de tipos mixtos vale la pena considerar el usos de pca para redución de variables numéricas y técnicas de mca para datos categóricos y finalmente utilizar algún tipo de algoritmode clasificación ejemplo el SVM para clasificar  los clientes que son los adecuados para resoder a la campaña.
+
+Variables
+
+id2	                              ID
+ $ TP_VIVIENDA_SEPO              	tipo de vivienda
+ $ TP_SUBSEGMENTO                	clasificación del cliente
+ $ TP_SEGMENTO_FINAL2            	Segmento de ciclo de vida
+ $ TP_PERSONA                    	Persona Física o moral
+ $ TP_NIVEL_IR_AJUSTADO          	nivel de ingresos anuales estimados
+ $ TP_DOMICILIO                  	Tipo de domicilio
+ $ TO_RANGO_EDAD                 	Rango de edad del cliente
+ $ TO_PROM_TO_OPERS_TARJ_TDC_3M  	número de transacciones promedio mensuales hechas con TDC en los últimos 3 meses
+ $ TO_PROM_TO_CARGOS_6M          	promedio del numero de cargos en los últimos 6 meses
+ $ TO_PROM_TO_CARGOS_3M          	promedio del numero de cargos en los últimos 3 meses
+ $ TO_PREST_CONSUMO              	número de préstamos contratados en el último año
+ $ TO_PLAZO                      	cuenta con algún producto de inversión
+ $ TO_NECESIDAD_FINAN_CAP_3M     	Ratio de captación vs. Créditos en los últimos 3 meses
+ $ TO_NECESIDAD_FINAN_CAP_1M     	Ratio de captación vs. Créditos en el último mes
+ $ TO_MISS_TO_SDO_MEDIO_2MA      	saldo medio fue reportado hace 2 meses
+ $ TO_MISS_TO_SDO_MEDIO_1M       	se ha reportado el saldo medio en el último mes
+ $ TO_MISS_TO_SDO_CORTE_2MA      	saldo al corte fue reportado hace 2 meses
+ $ TO_MISS_SDO_MEDIO_3M          	número de veces que no se ha reportado el saldo medio en los últimos 3 meses
+ $ TO_MISS_SDO_CORTE_3M          	número de veces que no se ha reportado el saldo al corte en los últimos 3 meses
+ $ TO_MISS_SDO_CORTE_1M          	se ha reportado el saldo al corte n el último mes
+ $ TO_MISS_FONDOS_AES_3M         	se ha reportado el saldo de fondos AES  en los últimos 3 meses
+ $ TO_MISS_ACTIVO_TOTAL_3M       	número de veces que el cte ha estado activo en los últimos 3 meses
+ $ TO_MERCADOS                   	número de productos de mercado de capitales/divisas/dinero
+ $ TO_IR_AJUSTADO                	estimación de ingresos anuales
+ $ TO_FONDOS_AES                 	número de fondos /avanzados/esenciales y selectos
+ $ TO_FONDO_RV                   	tiene fondos de renta variable
+ $ TO_FONDO_RF                   	tiene fondos de renta fja
+ $ TO_DELTA_TO_PREST_CONSUMO_0_2 	delta del número de  créditos al consumo en los último 3 meses
+ $ TO_DELTA_NEC_FIN_CAP_0_2      	delta de necesidad financiera con respecto a 3 meses anteriores
+ $ TO_CTA_HIPOTECA               	tiene algún crédito hipotecario vigente
+ $ NU_VINC_COGNODATA             	Estimación de la fidelidad del cliente
+ $ NU_VINC_BANCOMER              	índice de fidelidad
+ $ NU_REGULARIDAD_TDC_ULT_6M     	Frecuencia mensual de uso de la tdc en los últimos 6 ,meses
+ $ IM_SUM_SDO_MEDIO_3M           	suma de saldos medios captación mensuales de los últimos 3 meses
+ $ IM_SUM_SDO_MEDIO_1M           	suma de saldos medios captación mensuales de los último mes
+ $ IM_SUM_SDO_CORTE_3M           	suma de saldos a la fecha de corte de los últimos 3 meses
+ $ IM_SUM_SDO_CORTE_1M           	suma de saldos a la fecha de corte  del último mes
+ $ IM_SUM_IM_SDO_MEDIO_2MA       	saldo medio  2 meses antes
+ $ IM_SUM_IM_SDO_CORTE_2MA       	saldo al corte 2 meses antes
+ $ IM_SUM_FONDOS_AES_3M          	suma de saldo promedio de fondos AES en los últimos 3 meses
+ $ IM_SUM_ACTIVO_TOTAL_3M        	suma de saldos de todos los créditos en los últimos 3 meses
+ $ IM_PROM_VISTA_6M              	saldo promedio de captacion de los últimos 6 meses
+ $ IM_PROM_VISTA_3M              	saldo promedio de captacion de los últimos 3 meses
+ $ IM_PROM_VISTA_12M             	saldo promedio de captacion de los últimos 12 meses
+ $ IM_PROM_SDO_MEDIO_3M          	promedio mensual de saldos en los últimos 3 meses
+ $ IM_PROM_SDO_MEDIO_1M          	promedio mensual de saldos en el último mes
+ $ IM_PROM_SDO_MEDIO_12M         	promedio mensual de saldos en los últimos 12 meses
+ $ IM_PROM_SDO_CORTE_3M          	promedio mensual de saldos al corte de los últimos 3 meses
+ $ IM_PROM_SDO_CORTE_1M          	promedio mensual de saldos al corte del último mes
+ $ IM_PROM_SDO_CORTE_12M         	promedio mensual de saldos al corte de los últimos 12 meses
+ $ IM_PROM_PREST_NOM_12M         	importe promedio mensual de préstamos de nómina en los últimos 12 meses
+ $ IM_PROM_PREST_CONSUMO_6M      	importe promedio mensual de préstamos al consumo en los últimos 6 meses
+ $ IM_PROM_PREST_CONSUMO_3M      	importe promedio mensual de préstamos al consumo en los últimos 3 meses
+ $ IM_PROM_PREST_CONSUMO_1M      	importe promedio mensual de préstamos al consumo en el último mes
+ $ IM_PROM_PPIS_12M              	importe promedio mensual de ppis en los últimos 12 meses
+ $ IM_PROM_PLAZO_12M             	importe promedio mensual en plazos en los últimos 12 meses
+ $ IM_PROM_OTRO_12M              	importe promedio mensual de otros productos en los últimos 12 meses
+ $ IM_PROM_NOMINA_3M             	importe promedio de depósitos e nómina en los últimos 3 meses
+ $ IM_PROM_MERCADOS_12M          	importe promedio de sados en productos de mercados cap, div, in
+ $ IM_PROM_IM_OPERS_TARJ_TDC_6M  	importe promedio mensual de pagos con tdc en los últimos 6 meses
+ $ IM_PROM_IM_OPERS_TARJ_TDC_3M  	importe promedio mensual de pagos con tdc en los últimos 3 meses
+ $ IM_PROM_IM_OPERS_TARJ_TDC_1M  	importe promedio mensual de pagos con tdc en el último mes
+ $ IM_PROM_IM_NIBT_TOTAL_12M     	rentabilidad promedio mensual del cte. en el útimo año
+ $ IM_PROM_IM_CARGOS_6M          	importe promedio de cargos de los últimos 6 meses
+ $ IM_PROM_IM_CARGOS_3M          	importe promedio de cargos de los últimos 3 meses
+ $ IM_PROM_IM_CARGOS_1M          	importe promedio de cargos de los último mes
+ $ IM_PROM_IM_CARGOS_12M         	importe promedio de cargos de los últimos 12 meses
+ $ IM_PROM_HIPOTECA_12M          	importe promedio de pagos de hipoteca en los últimos 12 meses
+ $ IM_PROM_GASTOS_3M             	importe promedio de gastos en los últimos 3 meses
+ $ IM_PROM_GASTOS_1M             	importe promedio de gastos en el último mes
+ $ IM_PROM_FONDOS_AES_12M        	importe promedio de saldos de fondos avanzaos/esenciales y selectos
+ $ IM_PROM_FONDO_RV_12M          	importe promedio del saldo en fondos de renta variable de los últimos 12 meses
+ $ IM_PROM_FONDO_RF_12M          	importe promedio del saldo en fondos de renta fija de los últimos 12 meses
+ $ IM_PROM_CUOTA_TOT_ULT_3M      	importe promedio de cuota de tdc pagada en los últimos 3 meses
+ $ IM_PROM_CUOTA_TOT_ULT_1M      	importe promedio de cuota de tdc pagada en los último mes
+ $ IM_PROM_CARTERA_12M           	promedio del saldo de créditos  de los últimos 12 meses
+ $ IM_PROM_AUTO_12M              	importe promedio de pagos de crédito auto  en los últimos 12 meses
+ $ IM_PROM_ACTIVO_1M             	importe promedio mensual de pagos a créditos en el último mes
+ $ IM_PROM_ACTIVO_12M            	importe promedio mensual de pagos a créditos en los últimos 12 meses
+ $ IM_MAX_SDO_MEDIO_12M          	saldo máximo en los último 12 meses
+ $ IM_DELTA_IM_SDO_MEDIO_0_2     	delta de saldo medio actual vs. Hace 2 meses
+ $ IM_DELTA_IM_SDO_CORTE_0_2     	delta de saldo al corte actual vs. Hace 2 meses
+ $ IM_COC_IM_SDO_CORTE_ACTIVO_0_2	
+ $ IM_COC_IM_FONDOS_AES_CAP_0_2  	
+ $ contrata                      	variable de respuesta: 1 contrata y 0. e.o.c
+ $ CD_SEXO                       	sexo
+ $ CD_SEGMENTACION               	segmento operativo
+ $ CD_RESIDENCIA                 	País de Residencia
+ $ CD_OCUPACION                  	Ocupación
+ $ CD_ESTADO                     	Estado del Cliente
+ $ CD_EDO_CIVIL                  	estado civil
+-
+
+******rangos********
+edad:
+if edad, <= 37 then rango_edad = 0;
+    else if coalesce(edad,0) > 37 and coalesce(edad,0) <= 44 then rango_edad = 1;
+    else if coalesce(edad,0) > 44 and coalesce(edad,0) <= 52 then rango_edad = 2;
+    else if coalesce(edad,0) > 52 and coalesce(edad,0) <= 62 then rango_edad = 3;
+    else rango_edad = 4;
+
+case when 0 < ingreso_anual <= 50000.0 then '1_RENTA BAJA'
+                when ingreso_anual >  50000.0  and ingreso_anual <= 120000.0  then '2_RENTA MEDIA BAJA'
+                when ingreso_anual >  120000.0  and ingreso_anual <= 250000.0 then '3_RENTA MEDIA ALTA'
+                when ingreso_anual >  250000.0  and ingreso_anual <  450000.0 then '4_RENTA ALTA'
+             when ingreso_anual >= 450000.0 then '5_RENTA MUY ALTA'
+
+
+********************
+
+
+
+```{r}
+multiv<-read.csv('/home/abraham/multivsamp.csv',sep=';') 
+library(Amelia)
+missmap(multiv, main="Missings", 
+        col=c("yellow", "black"), legend=FALSE) 
+```
+
+```{r}
+cmult<-multiv[sapply(multiv, function(x) is.numeric(x))]
+missmap(cmult, main="Missings", 
+        col=c("yellow", "black"), legend=FALSE) 
+```
+
+```{r}
+ncero<-data.frame(colSums(is.na(cmult)))
+cmult<-cmult[rownames(subset(ncero,subset=colSums.is.na.cmult..<100000))] 
+
+missmap(cmult, main="Missings", 
+        col=c("yellow", "black"), legend=FALSE) 
+```
+
+
+```{r}
+datana<-is.na(cmult)
+cmult[datana]<-0 
+
+missmap(cmult, main="Missings", 
+        col=c("yellow", "black"), legend=FALSE) 
+
+```
+
+```{r}
+library(corrplot)
+
+a<-c(1)
+newmult<-cmult[-a]
+
+ncero<-data.frame(colSums(newmult))
+newmult<-newmult[rownames(subset(ncero,subset=colSums.newmult.!=0))] 
+newmult$contrata<-as.factor(newmult$contrata) 
+#newmult<-data.frame(scale(newmult) )
+
+#missmap(newmult, main="Missings", 
+#        col=c("yellow", "black"), legend=FALSE) 
+
+```
+
+```{r}
+#mat<-cor(newmult)
+
+#corrplot(mat,tl.cex=0.1,method='square')
+```
+
+```{r}
+#library(FactoMineR)
+#res.pca = PCA(newmult, scale.unit=FALSE, ncp=5, graph=F)
+#plot.PCA(res.pca, choix="var",invisible="ind")
+
+```
+
+```{r}
+# PCA
+
+# Importing the dataset
+dataset =newmult
+
+# Splitting the dataset into the Training set and Test set
+# install.packages('caTools')
+library(caTools)
+set.seed(123)
+split = sample.split(dataset$contrata, SplitRatio = 0.8)
+training_set = subset(dataset, split == TRUE)
+test_set = subset(dataset, split == FALSE)
+
+# Feature Scaling
+training_set[-68] = scale(training_set[-68])
+test_set[-68] = scale(test_set[-68])
+
+# Applying PCA
+# install.packages('caret')
+library(caret)
+# install.packages('e1071')
+library(e1071)
+pca = preProcess(x = training_set[-68], method = 'pca', pcaComp = 18)
+training_set = predict(pca, training_set[1:5000,])
+#training_set = training_set[c(2, 3, 1)]
+test_set = predict(pca, test_set[1:5000,])
+#test_set = test_set[c(2, 3, 1)]
+
+# Fitting SVM to the Training set
+# install.packages('e1071')
+library(e1071)
+classifier = svm(formula = contrata~ .,
+                 data = training_set,
+                 type = 'C-classification',
+                 kernel = 'radial',probability=TRUE)
+```
+
+```{r}
+# Predicting the Test set results
+y_pred = predict(classifier, newdata = test_set,probability = TRUE)
+
+# Making the Confusion Matrix
+cm = table(test_set[, 1], y_pred)
+
+# Visualising the Training set results
+library(ElemStatLearn)
+set = training_set
+X1 = seq(min(set[, 2]) - 1, max(set[, 2]) + 1, by = 100)
+X2 = seq(min(set[, 3]) - 1, max(set[, 3]) + 1, by = 100)
+X3 = seq(min(set[, 4]) - 1, max(set[, 4]) + 1, by = 100)
+X4 = seq(min(set[, 3]) - 1, max(set[, 3]) + 1, by = 100)
+X5 = seq(min(set[, 5]) - 1, max(set[, 5]) + 1, by = 100)
+X6 = seq(min(set[, 6]) - 1, max(set[, 6]) + 1, by = 100)
+X7 = seq(min(set[, 7]) - 1, max(set[, 7]) + 1, by = 100)
+X8 = seq(min(set[, 8]) - 1, max(set[, 8]) + 1, by = 100)
+X9 = seq(min(set[, 9]) - 1, max(set[, 9]) + 1, by = 100)
+X10 = seq(min(set[, 10]) - 1, max(set[, 11]) + 1, by = 100)
+X11 = seq(min(set[, 12]) - 1, max(set[, 12]) + 1, by = 100)
+X12 = seq(min(set[, 13]) - 1, max(set[, 13]) + 1, by = 100)
+X13 = seq(min(set[, 14]) - 1, max(set[, 14]) + 1, by = 100)
+X14 = seq(min(set[, 15]) - 1, max(set[, 15]) + 1, by = 100)
+X15 = seq(min(set[, 16]) - 1, max(set[, 16]) + 1, by = 100)
+X16 = seq(min(set[, 17]) - 1, max(set[, 17]) + 1, by = 100)
+X17 = seq(min(set[, 18]) - 1, max(set[, 18]) + 1, by = 100)
+X18 = seq(min(set[, 19]) - 1, max(set[, 19]) + 1, by = 100)
+grid_set = expand.grid(X1, X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,X13,X14,X15,X16,X17,X18)
+colnames(grid_set) = c('PC1', 'PC2','PC3', 'PC4','PC5', 'PC6','PC7', 'PC8','PC9', 'PC10',
+                       'PC11', 'PC12','PC13', 'PC14','PC15', 'PC16','PC17', 'PC18')
+y_grid = predict(classifier, newdata = grid_set)
+
+```
+
+```{r}
+
+```
+

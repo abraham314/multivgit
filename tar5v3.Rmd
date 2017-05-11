@@ -1,0 +1,225 @@
+---
+title: "MDS votaciones"
+author: ""
+date: "7 de marzo de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Datos
+
+De la base de votaciones de senadores y partidos tenemos:
+
+```{r Datos}
+load("/home/mb45296/R/x86_64-pc-linux-gnu-library/3.3/metodosMultivariados2017/data/senado_votacion.rda")
+senado_votaciones <-senado_votacion 
+load("/home/mb45296/R/x86_64-pc-linux-gnu-library/3.3/metodosMultivariados2017/data/senado_partidos.rda")
+
+part<-senado_partidos
+```
+
+
+## renglones y columnas
+
+dado que los senadores aparecen en las columnas vamos a trnasponer el data frame para hacerlos renglones con los nombres de las columnas relacionadas con la variable "asunto", además eliminamos variables que no analizaremos que en este caso son fecha, asunto y Href para sólo quedarnos con las votaciones de los senadores por tema:
+
+```{r renglones}
+#eliminamos los renglones informativos
+senado<-senado_votaciones[,-3:-1]
+#guardamos el vector de asuntos para hacerlos columnas
+colt<-senado_votaciones$ASUNTO
+#genramos el dataframe transpuesto
+trnew<-as.data.frame(t(senado))
+#nombres de las columnas relacionados con asunto
+colnames(trnew)<-colt
+
+```
+
+
+
+
+## Missings
+
+revisamos la cantidad de datos missing todos lo que aperece en amarillo es la cantidad de registros missing en cada columna que en los datos significa abstinencia, para estos casos reemplazamos estos casos 0's:
+
+```{r missings}
+library(Amelia)
+missmap(trnew, main="Votaciones", 
+        col=c("yellow", "black"), legend=FALSE) 
+datana<-is.na(trnew)
+trnew[datana]<-0
+```
+
+
+## Centrado y escalamiento de Datos
+
+Centramos los datos de las votaciones:
+
+```{r centrado}
+X <- as.matrix(trnew)
+X <- scale(X, center = TRUE, scale = TRUE)
+X[1,1:2]
+```
+
+## Distancias
+
+Obtenemos la matriz de distancias euclidianas entre senadores en este caso tenemos una matriz de 134 x 134 : 
+$$
+D = 
+ \begin{pmatrix}
+  d_{1,1} & d_{1,2} & \cdots & d_{1,n} \\
+  d_{2,1} & d_{2,2} & \cdots & d_{2,n} \\
+  \vdots  & \vdots  & \ddots & \vdots  \\
+  d_{n,1} & d_{n,2} & \cdots & d_{n,n} 
+ \end{pmatrix}\\ 
+\\
+ tal\ que\ d_{i,j}=\lVert \mathbf{X_{i}-X{j}} \rVert 
+$$
+que en este caso n=134.
+```{r dist}
+D <- as.matrix(dist(X))
+```
+
+posteriormente convertimos la matriz de distancias al cuadrado:
+$$
+D2_{i,j}=d_{i,j}^2 \ para\ toda\ i,j
+$$
+```{r square}
+D2 <- D ^2
+D2[1:2,1:2]
+```
+
+## matriz centradora de datos
+
+Utilizamos de la matriz centradoradora para las distancias al cuadrado:
+$$
+C=I-\frac{1}{n}\mathbf{1}\textbf{1}^\intercal 
+$$
+
+```{r centra}
+n <- nrow(D2)
+ones <- rep(1, n)
+C <- diag(1, n) - (1 / n) * ones %*% t(ones)
+C[1:3,1:3]
+```
+
+
+## matriz doble centradora
+
+
+Utilizamos de la matriz doble centradora para crear B:
+$$
+B=-\frac{1}{2}CD_{2}C 
+$$
+
+```{r dcentra}
+B <- - (1 / 2)*C %*% D2 %*% C
+B[1:3,1:3]
+```
+
+
+##Descomposición espectral
+Por el teorma visto en clase sabemos que si B es una matriz semidefinida positiva:
+$$
+B=UG_{2}{U}^\intercal=X{X}^\intercal\\ 
+con\ X=UG_{2}^{\frac{1}{2}}\\ 
+donde\ U\ es\ la\ matriz\ de\ eigenvectores\ y\ G_{2}\ la\ matriz\ de\ eigenvalores\ en\ la\ diagonal.
+$$
+
+```{r espectral}
+## eigen vectores de B
+eigen_decomposition <- eigen(B)
+## eigenvectores
+U <- eigen_decomposition$vectors
+U[1:3,1:3]
+## eigenvalores
+G2 <- diag(eigen_decomposition$values) 
+G2[1:3,1:3]
+## Xstar se compone de eigenvalos y eigenvectores de B
+Xstar <- U %*% (G2 ^ (0.5))
+Xstar[1:3,1:3]
+```
+
+## reducción de dimensiones
+
+obtendremos las coordenadas de cada uno de los senadores con respecto a las primeras 2 dimensiones:
+$$
+X_{k}=U^{[1:k]}(G_{2}^{\frac{1}{2}})_{[1:k]}^{[1:k]}\\ 
+con\ k=2
+$$
+
+```{r reduccion}
+## reducción de dimensiones
+k <- 2
+
+Xk <- U[, 1:k] %*% (G2 ^ 0.5)[1:k, 1:k]
+Xk[1:5,]
+
+```
+
+## gráfica de datos
+
+```{r graf}
+plot(Xk)
+```
+
+## función alterna
+"cmds", esta es una función de R que genera el mismo proceso que hicimos manualmente, a apartir de la matriz D de distancias y tiene como output la matriz Xk que generamos en el paso anterior:
+
+```{r alterna}
+## alternative: 
+cmds <- cmdscale(D)
+cmds
+plot(cmds)
+```
+
+
+## Calidad de los datos
+con esta métrica tratamos de ver cual es la calidad de los datos:
+$$
+M={\frac{\sum_{i=1}^{134}\lambda_{i}}{tr(B)}} \\ 
+con\  \lambda_{i}\ los\ eigenvalores\ de\ B\ i.e.\ los\ elementos\ de\ la\ matriz\ G_{2}
+$$
+
+```{r calidad}
+## suma de eigenvalores entre la traza de B: 
+M<-sum(diag(G2))/sum(diag(B))
+M
+```
+donde podemos ver que la calidad es prácticamente perfecta. 
+
+Agregamos los partidos al dataframe que se genara a partir de Xk
+
+
+```{r partidos}
+## creamos un dataframe de las 2 dimensiones
+mds<-as.data.frame(cmds)
+mds$SENADOR<-rownames(cmds)
+fin<-merge(x = mds, y = senado_partidos, by = "SENADOR", all.x = TRUE)
+
+```
+
+##GRÁFICO 
+Graficamos a los senadores por distinguidos por su partido en las 2 primeras dimensiones:
+```{r grafico}
+library(ggplot2)
+pl<-ggplot(fin, aes(x=V1, y=V2,text = paste(SENADOR))) + geom_point(aes(color=PARTIDO)) + 
+  scale_color_manual(values=c("blue", "yellow", "green","red","orange","gray","black"))+
+  geom_vline(xintercept = 0)+geom_hline(yintercept = 0)
+
+print(pl)
+```
+sobre la metodología podemos ver que las 2 primeras dimensiones explican el 32% de la varianza de los datos esto lo podemos calcular con la siguiente expresión:
+$$
+{\frac{\lambda_1+\lambda_{2}}{\sum_{i=1}^{134}\lambda_{i}}}\\
+con\ \lambda_{i}\ el\ i-ésimo\ eigenvalor\ de\ B
+$$
+```{r varianza}
+Var<-(G2[1,1]+G2[2,2])/sum(diag(G2))
+Var
+```
+
+conclusiones de los datos podemos ver en la gráfica que los senadores del PAN y el PRI del lado izquierdo, son mucho más parecidos en las votaciones que emiten para la mayoría de los temas, en cambio los del PRD parecen más lejanos o votan de forma contraria seguidos por el PT lo cual coincide con el tipo de corrientes que representan.

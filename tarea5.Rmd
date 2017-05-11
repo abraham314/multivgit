@@ -14,9 +14,11 @@ knitr::opts_chunk$set(echo = TRUE)
 De la base de votaciones de senadores y partidos tenemos:
 
 ```{r Datos}
-senado_votaciones <- readRDS("/home/mb45296/votacionEspacialMexico/source_rds/L63_A2_N1_PO1_RESULTS.RDS")
+load("/home/mb45296/R/x86_64-pc-linux-gnu-library/3.3/metodosMultivariados2017/data/senado_votacion.rda")
+senado_votaciones <-senado_votacion 
+load("/home/mb45296/R/x86_64-pc-linux-gnu-library/3.3/metodosMultivariados2017/data/senado_partidos.rda")
 
-part<-readRDS('/home/mb45296/votacionEspacialMexico/source_rds/L63_A2_N1_PO1_ASISTENCIA_ASISTENCIA.RDS')
+part<-senado_partidos
 
 ```
 

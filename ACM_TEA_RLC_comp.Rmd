@@ -1,0 +1,186 @@
+---
+title: "Ejemplo_TEA  ACM"
+author: "Equipo 7. Manuel Rios, Adrian Vazquez, Abraham Nieto, Ricardo Lastra"
+date: "24 de marzo de 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+###Ejemplo en FACTOMINER con data set TEA  ACM ó MCA
+
+Datos
+```{r }
+# lCargamos paquetes
+require(FactoMineR) #Deben de de intalar primero con install.packages("FactoMineR")  el paquete de FactoMine para ACM o  MCA
+require(ggplot2)
+```
+
+Para entender las variables elegidas, responden a las siguientes preguntas de un cuestionario realizado a 300 personas sobre su consumo de "Té"...el cuestionario es mas extenso...en el ejemplo solo se elige lo siguiente:
+
+1.What kind of tea do you drink (black, green, flavored)
+2.How do you drink it (alone, w/milk, w/lemon, other)
+3.What kind of presentation do you buy (tea bags, loose tea, both)
+4.Do you add sugar (yes, no)
+5.Where do you buy it (supermarket, shops, both)
+6.Do you always drink tea (always, not always)
+
+```{r }
+#  Cargamos data set
+data(tea)
+#  seleccionamos solo 6 variables de las 36 disponibles
+newtea = tea[, c("Tea", "How", "how", "sugar", "where", "always")]
+# revisamos datos
+head(newtea)
+```
+
+
+Numero de categorias por variable
+```{r }
+cats = apply(newtea, 2, function(x) nlevels(as.factor(x)))
+cats
+```
+###Aqui viene la magia que no entiendo mucho aun del ::FACTOMINER::
+```{r }
+# apply MCA
+mca1 = MCA(newtea, graph = FALSE)
+
+# Tabla de eigenvalores  y  % de varianza
+mca1$eig
+```
+Coordenadas de columnas
+```{r }
+head(mca1$var$coord)
+```
+Coordenadas de filas
+```{r }
+head(mca1$ind$coord)
+```
+
+Graficamos como en clase
+```{r }
+# Graficamos con Data.Frame
+mca1_vars_df = data.frame(mca1$var$coord, Variable = rep(names(cats), 
+    cats))
+mca1_obs_df = data.frame(mca1$ind$coord)
+
+# Grafica de las categorias de las variables
+ggplot(data = mca1_vars_df, aes(x = Dim.1, y = Dim.2, label = rownames(mca1_vars_df))) + 
+    geom_hline(yintercept = 0, colour = "gray70") + geom_vline(xintercept = 0, 
+    colour = "gray70") + geom_text(aes(colour = Variable)) + ggtitle("Grafica de ACM de variables de TEA en R con FactoMineR")
+```
+
+
+Le hechamos ganitas a la grafica... JOJOJOJOJO
+```{r }
+# Observaciones y categorias
+ggplot(data = mca1_obs_df, aes(x = Dim.1, y = Dim.2)) + geom_hline(yintercept = 0, 
+    colour = "gray70") + geom_vline(xintercept = 0, colour = "gray70") + geom_point(colour = "gray50", 
+    alpha = 0.7) + geom_density2d(colour = "gray80") + geom_text(data = mca1_vars_df, 
+    aes(x = Dim.1, y = Dim.2, label = rownames(mca1_vars_df), colour = Variable)) + 
+    ggtitle("Grafica de ACM de variables de TEA en R con FactoMineR") + scale_colour_discrete(name = "Variable")
+```
+
+
+Un BiPlot de ejemplo...se ve FEO yo lo quitaria
+```{r }
+plot(mca1)
+```
+
+
+...y ya...hay otras librerias pero creo que con esto es suficiente....
+
+
+Haciendo análisis de correspondencias simples a partir dela tabla disyuntiva $Z$ usando la función CA de FactoMiner:
+primero generamos las funciones que calculan la matriz $Z$ y la matriz de Burt:
+```{r}
+dichotom <- function(data,out='numeric') {
+  if(!is.data.frame(data)) data <- data.frame(data)
+  res <- matrix(nrow=nrow(data),ncol=length(levels(data[,1])))
+  for(i in 1:ncol(data)) {
+    if(is.factor(data[,i])==FALSE) data[,i] <- factor(data[,i])
+    nlevels <- length(levels(data[,i]))
+    temp <- matrix(nrow=nrow(data),ncol=nlevels)
+    for(j in 1:nlevels) temp[,j] <- ifelse(data[,i]==levels(data[,i])[j],1,0)
+    colnames(temp) <- paste(names(data)[i],levels(data[,i]),sep=".")
+    if(i==1) res <- temp else res <- cbind(res,temp)
+  }
+  res <- as.data.frame(res)
+  if(out=='factor') for(i in 1:ncol(res)) res[,i] <- as.factor(res[,i])
+  res
+}
+
+burt <- function(data) {
+  disj <- dichotom(data,out='numeric')
+  res <- as.matrix(t(disj)) %*% as.matrix(disj)
+  return(res)
+}
+```
+Creamos la matriz de 0's y 1's a partir de newtea...
+```{r}
+Z<-dichotom(newtea) 
+head(Z)
+```
+hacemos el analisis de correspondencias simples a la matriz $Z$ y graficamos: 
+```{r}
+res.caZ<-CA(Z) #corresponcias simples para la matriz Z
+res.caZ 
+
+#usamos el mismo codigo con el se grafico en MCA 
+# Graficamos con Data.Frame
+mca1_vars_df = data.frame(res.ca$col$coord, Variable = rep(names(cats), #en vez de usar mca1$var$coord usamos res.ca$col$coord y abajo en vez de usar mca1$ind$coord usamos res.ca$row$coord
+    cats))
+mca1_obs_df = data.frame(res.ca$row$coord)
+
+# Grafica de las categorias de las variables
+ggplot(data = mca1_vars_df, aes(x = Dim.1, y = Dim.2, label = rownames(mca1_vars_df))) + 
+    geom_hline(yintercept = 0, colour = "gray70") + geom_vline(xintercept = 0, 
+    colour = "gray70") + geom_text(aes(colour = Variable)) + ggtitle("Grafica de ACM de variables de TEA en R con FactoMineR")
+```
+
+si comparamos la grafica con la obtenida de MCA es la misma entonces se prueba que ACM es lo mismo que hacer ACS en la matriz $Z$
+
+con la matriz de BUrt ahora....
+```{r}
+B<-burt(newtea)
+head(B)
+```
+usando correspondencias simples al igual que el ejemplo anterior..
+```{r}
+res.ca<-CA(B) #corresponcias simples para la matriz Z
+res.ca 
+
+#usamos el mismo codigo con el se grafico en MCA 
+# Graficamos con Data.Frame
+mca1_vars_df = data.frame(res.ca$col$coord, Variable = rep(names(cats), #en vez de usar mca1$var$coord usamos res.ca$col$coord y abajo en vez de usar mca1$ind$coord usamos res.ca$row$coord
+    cats))
+mca1_obs_df = data.frame(res.ca$row$coord)
+
+# Grafica de las categorias de las variables
+ggplot(data = mca1_vars_df, aes(x = Dim.1, y = Dim.2, label = rownames(mca1_vars_df))) + 
+    geom_hline(yintercept = 0, colour = "gray70") + geom_vline(xintercept = 0, 
+    colour = "gray70") + geom_text(aes(colour = Variable)) + ggtitle("Grafica de ACM de variables de TEA en R con FactoMineR")
+```
+
+se obtiene la misma gráfica esto comprueba loque en la teoría en resumen se explica, la matriz de dummies $Z$ y la matriz de Burt $B$ haciéndoles análisis de correspondencias simples resulta lo mismo que hacer análisis de correspondencias múltiples a la tabla original newtea, sólo hay que mencionar que parael caso de la matriz de Burt los eigenvalores deben ajustarse ya que al hacer un perfil de filas y columnas y como la matriz de burt es simétrica se obtiene la misma información...
+```{r}
+sqrt(res.ca$eig[[1]])
+```
+
+```{r}
+res.caZ$eig[[1]]
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+

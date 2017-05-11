@@ -1,0 +1,72 @@
+---
+title: "ex"
+author: "clase"
+date: "9 de abril de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Pregunta 4
+a) 
+Objetivo del MDS clásico es encontrar una configuración de puntos en el espacio $p$-dimensional de las distancias entre los puntos de tal manera que las coordenadas de  $n$ puntos o individuos a lo largo de las dimensiones puedan ser representadas en una matriz de distancia Euclidiana, en otras palabras es la representación de datos como puntos en un espacio multidimensional a través de la construcción de una configuración de puntos cuando se conoce una determinada información sobre proximidades entre objetos.
+El objetivo principal del MDS es representar N objetos en un espacio dimensional reducido (q dimensiones, siendo q < N), de tal forma que la distorsión causada por la reducción de la dimensionalidad sea la menor posible, es decir, que las distancias entre los objetos representados en el espacio q dimensional, sean lo más parecidas posible a las distancias en el espacio N dimensional.
+
+b)
+demostración:
+sea 
+$${-\frac{1}{2}}K_{n}D^2K_{n}=\\
+{-\frac{1}{2}}(I_{n}-{\frac{1}{n}}11^T)D^2(I_{n}-{\frac{1}{n}}11^T)\\
+={-\frac{1}{2}}(I_{n}-{\frac{1}{n}}11^T)(D^2-{\frac{1}{n}}D^211^T)=\\
+{-\frac{1}{2}}(D^2-{\frac{1}{n}}11^TD^2-{\frac{1}{n}}D^211^T+{\frac{1}{n^2}}11^TD^211^T)
+$$
+entonces la posicion $i,j$ es:
+$$
+{-\frac{1}{2}}(d_{ij}^2-{\frac{1}{n}}\sum_{i=1}^{n}d_{ij}^2-{\frac{1}{n}}\sum_{j=1}^{n}d_{ij}^2+{\frac{1}{n^2}}\sum_{i=1}^{n}\sum_{j=1}^{n}d_{ij}^2)={-\frac{1}{2}}(d_{ij}^2-d_{i*}^2-d_{*j}^2+d_{**}^2) \  (*)
+$$
+ahora sea sea $B=XX^T$ entonces $b_{ij}=\sum_{k=1}^{p}x_{ik}x_{jk}=x_{i}x{j}^T$ ahora la distancia entre el individuo $i$ y el $j$ es $d{ij}^2=(x{i}-x{j})^2=x_{i}x{i}^T+x_{j}x{j}^T-2x_{i}x_{j}^T=b_{ii}+b_{jj}-2b_{ij} \ \ \ (1)$ 
+dado que es $X$ es una mtriz de datos centrada entonces $\sum_{j=1}^{n}b_{ij}=0$ por tanto:
+
+$$
+{\frac{1}{n}}\sum_{i=1}^{n}d_{ij}^2={\frac{1}{n}}\sum_{i=1}^{n}b_{ii}+b_{jj}\\
+{\frac{1}{n}}\sum_{j=1}^{n}d_{ij}^2=b_{ii}+{\frac{1}{n}}\sum_{j=1}^{n}b_{jj}\\ 
+{\frac{1}{n^2}}\sum_{i=1}^{n}\sum_{j=1}^{n}d_{ij}^2={\frac{2}{n}}\sum_{j=1}^{n}b_{ii} \ \ \ \ (2)
+$$
+por (1) sabemos que
+
+$$
+b_{ij}={-\frac{1}{2}}(d_{ij}^2-b_{ii}-b_{jj})\\
+={-\frac{1}{2}}(d_{ij}^2+{\frac{1}{n}}\sum_{j=1}^{n}b_{jj}-{\frac{1}{n}}\sum_{j=1}^{n}d_{ij}^2+{\frac{1}{n}}\sum_{i=1}^{n}b_{ii}-{\frac{1}{n}}\sum_{i=1}^{n}d_{ij}^2)\\
+={-\frac{1}{2}}(d_{ij}^2-{\frac{1}{n}}\sum_{j=1}^{n}d_{ij}^2-{\frac{1}{n}}\sum_{i=1}^{n}d_{ij}^2+{\frac{2}{n}}\sum_{i=1}^{n}b_{ii})={-\frac{1}{2}}(d_{ij}^2-d_{i*}^2-d_{*j}^2+d_{**}^2) \ \ \ \ (**)
+$$
+recordar que por(2) 
+${\frac{2}{n}}\sum_{i=1}^{n}b_{ii})=d_{**}^2$ entonces (*) y (**) por tanto se cumple la demostración tal que $B=XX^T={-\frac{1}{2}}K_{n}D^2K_{n}$
+
+c)
+```{r 1}
+loc <- cmdscale(eurodist) 
+x <- loc[, 1]
+y <- loc[, 2] 
+plot(x, y, type = "n", xlab = "", ylab = "", asp = 1, axes = FALSE,
+     main = "cmdscale(eurodist)")
+text(x, y, rownames(loc), cex = 0.6)
+```
+
+aunque el eje Y aparece volteado(puede voltearse con el signo) lo que muestra la gráfica es práctimente el mapa GEOGRÁFICO de estas ciudades  de Europa sin ocupar datos del mismo tipo, al final con 2 dimensiones de la matriz de distancias estamos representando la as ciudades por ejemplo Lisboa y Madrid se representan prácticamente igual que en coordenadas de latitud y longitud.
+Aunque el mapa aparece rotado la proximidad de las ciudades está bien representada, recordar que la dirección de los ejes esta dada por los factores calculads para: 
+$$
+B=UG_{2}{U}^\intercal=X{X}^\intercal\\ 
+con\ X=UG_{2}^{\frac{1}{2}}\\ 
+donde\ U\ es\ la\ matriz\ de\ eigenvectores\ y\ G_{2}\ la\ matriz\ de\ eigenvalores\ en\ la\ diagonal.
+$$
+entonces recordar que los eigenvectores son únicos salvo el signo y en este caso la dirección de lal segundo factor $Y$ está rotada de acuerdo con la posición geográfica de las ciudades entonces cambiando el signo al segundo factor lo corregimos.
+
+
+```{r 2}
+x <- loc[, 1]
+y <- -loc[, 2] #cambio de signo
+plot(x, y, type = "n", xlab = "", ylab = "", asp = 1, axes = FALSE,
+     main = "cmdscale(eurodist)")
+text(x, y, rownames(loc), cex = 0.6)
+```

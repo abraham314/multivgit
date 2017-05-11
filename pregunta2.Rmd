@@ -1,0 +1,57 @@
+---
+title: "preg2"
+author: "clase"
+date: "11 de abril de 2017"
+output: html_document
+---
+a)Recordar que PCA trata de reducir el número de variables originales a un número menor llamadas componentes principales, entonces a tráves del PCA la idea es determinar los ejes naturales de la nube de puntos (los ejes del elipsoide en 2 dim) cuyo origen es $\overline y$ el vecor medio de los datos $Y=y_{1},...y_{n}$, esto se realiza restando $\overline y$ y calculando la rotación(descomposición SVD pregunta 1b) que minimice la suma de las distancias a los ejes.
+podemos rotar los ejes multiplcando cada vector$p$-dimensional $y_{i}$ por una matriz ortogonal $P$ 
+$$
+z_{i}=Py_{i}
+$$
+entonces buscamos la matriz ortogonal $P$ que nos proporcione las componentes pales. $Z_{1},...Z_{p}$ que no estén correlacionadas. Pra ello necesitamos que la matriz de varianzas de $Z$,$\Sigma_{z}$ sea diagonal entonces $\Sigma_{z}=P \Sigma(Y) P^T$, entonces el problema es encontrar $P$ que diagonalice $\Sigma(Y)$.
+sin pérdida de generalidad podemos suponer que la matriz de datos $Y$ es centrada  entonces por la pregunta 1c) sabemos que $\Sigma(Y)={\frac{1}{n}}Y^TY$ entonces la matriz $P$ que buscamos no es otra más que la matriz $V$ de la descomposición svd de $Y=U \Sigma V^T$ donde las columnas de $V$ contienen los eigenvectores de la matriz de varianzas y covarianzas de $Y$, $\Sigma(Y) $
+
+
+
+
+b) 
+Cuando las componentes principales se calculan  a partir de la matriz de correlaciones y no de la de covarianzas  la matriz de loadings $C=V\Lambda^{\frac{1}{2}}$ con $V$ la matriz de eigenvectores y $\Lambda$ la matriz diagonal de eigenvalores $\lambda$ contiene las correlaciones entre las variables originales y las componentes.
+
+c)
+recordar que El objetivo principal del análisis de componentes principales es reducir
+la dimensionalidad de un conjunto (muy) grande de datos y las componentes principales tratan de explicar la mayor variabilidad de los datos con pocas componentes y definen las direcciones.
+Las componentes principales son las combinaciones lineales de las variables originales con varianza máxima, entonces dado un conjunto de $p$ variables $x_{1},...x_{p}$ y se trata de de calcular a partr de ellas, un nuevo conjunto de variables $y_{1},...y_{p}$ no correlacionadas entre sí, cuyas vaianzas vayan decreciendo progresivamente.
+Cada $y_{j}$ es combinación lineal de las $x_{i}$ originales tal que $y_{j}=a_{j1}x_{1}+...+a_{jp}x_{p}=a_{j}^Tx$ con $a_{j}^T=(a_{1j},...,a_{pj})$ (eigenvector $j$).
+Ahora para maximizar la varianza podríamos aumentar los coeficientes $a_{ij}$ . por ello para mantener la ortogonalidad de la transformación $a_{j}^Ta_{j}=1$. El primer componente se calcula eligiendo $a_{1}$ de tal modo que $y_{1}$ tega la mayor varianza posible sujeta a $a_{j}^Ta_{j}=1$. La segunda componente se calcula obtienendo $a_{2}$  de modo que $y_{2}$ no se correlaciones con $y_{1}$ y de igual modo se eligen el resto de las componentes de tal modo que las $y_{j}$ vayan teniendo cada vez menor varianza explicada.
+
+La Rotación Varimax es un método de rotación ortogonal:
+Los ejes se rotan de forma que se preserva la no correlación entre los factores(Análisis factorial*),es decir,los nuevos ejes (ejes rotados) son ortogonales aigual que los ejes originales.
+La rotación se apoya en el problema de falta de identificación  de los factores obtenidos por rotaciones ortogonales, de forma que si $T$ es una matriz ortogonal($T^TT=TT^T=I$) entonces:
+$$
+X=FA^T+U=FTT^TA^T+U=GB^T+U \\
+X=matriz \ de \ datos\\
+A=matriz\ de\ cargas\ factoriales\\
+F=matriz\ de \ puntuaciones\ factoriales\\
+U=factores\ únicos
+$$
+donde la matriz $G$ es una rotación de $F$, realmente lo que se realiza es un giro de ejes, de forma que cambian las cargas factoriales y los factores.
+Entonces se trata de buscar una matriz $T$ tal que la nueva matriz de cargas factoriales $B$ tenga muchos valores nulos o casi nulos y unos pocos cercanos a 1.
+uno de los métodos más empleados en la rotación ortogonal es ala rotación varimax, este método minimiza el número de variables con cargas altas en un factor,mejorando la interpretacón de estos.
+El método considera que si se aumenta la varianza de las cargas factoriales al cuadrado de cada factor consiguiendo que algnas se acerquen a 1 y otras a ceo, se obtiene una pertenencia más clara de cada variable al factor y los nuevos ejes se obtienen maximizando a suma de los $k$ factores retenidos de las varanzas de las cargas factoriales al cuadrado dentro de caa factor.
+ en consecuencia el método varimax determina la matriz $B$ de forma que maximice la suma de las varianzas
+$$
+V=p\sum_{i=1}^k\sum_{j=1}^p({\frac{b_{ij}}{h_{j}}})^2-\sum_{i=1}^k(\sum_{j=1}^p{\frac{b_{ij}^2}{h_{j}^2}})^2\\
+h_{i}^2=Var(\sum_{j=1}^kA_{ij}F_{j})
+$$
+
+*El Análisis Factorial es una técnica estadística multivariante
+cuyo principal propósito es sintetizar las interrelaciones observadas
+entre un conjunto de variables en una forma concisa y segura como
+una ayuda a la construcción de nuevos conceptos y teorías. Para ello
+utiliza un conjunto de variables aleatorias inobservables, que
+llamaremos factores comunes, de forma que todas las covarianzas o
+correlaciones son explicadas por dichos factores y cualquier porción
+de la varianza inexplicada por los factores comunes se asigna a
+términos de error residuales que llamaremos factores únicos o
+específicos. 

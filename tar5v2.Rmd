@@ -14,16 +14,17 @@ knitr::opts_chunk$set(echo = TRUE)
 De la base de votaciones de senadores y partidos tenemos:
 
 ```{r Datos}
-senado_votaciones <-readRDS("/home/mb45296/votacionEspacialMexico/source_rds/L63_A2_N1_PO1_RESULTS.RDS")
+load("/home/mb45296/R/x86_64-pc-linux-gnu-library/3.3/metodosMultivariados2017/data/senado_votacion.rda")
+senado_votaciones <-senado_votacion 
+load("/home/mb45296/R/x86_64-pc-linux-gnu-library/3.3/metodosMultivariados2017/data/senado_partidos.rda")
 
-part<-readRDS('/home/mb45296/votacionEspacialMexico/source_rds/L63_A2_N1_PO1_ASISTENCIA_ASISTENCIA.RDS')
-
+part<-senado_partidos
 ```
 
 
 ## renglones y columnas
 
-dado que los senadores aparecen en las columnas vamos a trnasponer el data frame para hacerlos renglones con los nombres de las columnas relacionadas con la variable "asunto"como columnas..
+dado que los senadores aparecen en las columnas vamos a trnasponer el data frame para hacerlos renglones con los nombres de las columnas relacionadas con la variable "asunto", además eliminamos variables que no analizaremos que en este caso son fecha, asunto y Href para sólo quedarnos con las votaciones de los senadores por tema:
 
 ```{r renglones}
 #eliminamos los renglones informativos
@@ -42,7 +43,7 @@ colnames(trnew)<-colt
 
 ## Missings
 
-revisamos la cantidad de datos missing:
+revisamos la cantidad de datos missing todos lo que aperece en amarillo es la cantidad de registros missing en cada columna que en los datos significa abstinencia, para estos casos reemplazamos estos casos 0's:
 
 ```{r missings}
 library(Amelia)
@@ -55,7 +56,7 @@ trnew[datana]<-0
 
 ## Centrado y escalamiento de Datos
 
-Eliminamos variables que no analizaremos:
+Centramos los datos de las votaciones:
 
 ```{r centrado}
 X <- as.matrix(trnew)
@@ -65,7 +66,7 @@ X[1,1:2]
 
 ## Distancias
 
-Obtenemos la matriz de distancias entre individuos: 
+Obtenemos la matriz de distancias euclidianas entre senadores en este caso tenemos una matriz de 134 x 134 : 
 $$
 D = 
  \begin{pmatrix}
@@ -73,9 +74,11 @@ D =
   d_{2,1} & d_{2,2} & \cdots & d_{2,n} \\
   \vdots  & \vdots  & \ddots & \vdots  \\
   d_{n,1} & d_{n,2} & \cdots & d_{n,n} 
- \end{pmatrix}
+ \end{pmatrix}\\ 
+\\
+ tal\ que\ d_{i,j}=\lVert \mathbf{X_{i}-X{j}} \rVert 
 $$
-que en este caso n=132.
+que en este caso n=134.
 ```{r dist}
 D <- as.matrix(dist(X))
 ```
@@ -91,7 +94,7 @@ D2[1:2,1:2]
 
 ## matriz centradora de datos
 
-Utilizamos de la mtriz centradoradora para las distancias al cuadrado:
+Utilizamos de la matriz centradoradora para las distancias al cuadrado:
 $$
 C=I-\frac{1}{n}\mathbf{1}\textbf{1}^\intercal 
 $$
@@ -107,7 +110,7 @@ C[1:3,1:3]
 ## matriz doble centradora
 
 
-Utilizamos de la matriz doble centradora:
+Utilizamos de la matriz doble centradora para crear B:
 $$
 B=-\frac{1}{2}CD_{2}C 
 $$
@@ -122,7 +125,8 @@ B[1:3,1:3]
 Por el teorma visto en clase sabemos que si B es una matriz semidefinida positiva:
 $$
 B=UG_{2}{U}^\intercal=X{X}^\intercal\\ 
-con\ X=UG_{2}^{\frac{1}{2}}
+con\ X=UG_{2}^{\frac{1}{2}}\\ 
+donde\ U\ es\ la\ matriz\ de\ eigenvectores\ y\ G_{2}\ la\ matriz\ de\ eigenvalores\ en\ la\ diagonal.
 $$
 
 ```{r espectral}
@@ -143,7 +147,8 @@ Xstar[1:3,1:3]
 
 obtendremos las coordenadas de cada uno de los senadores con respecto a las primeras 2 dimensiones:
 $$
-X_{k}=U^{[1:k]}(G_{2}^{\frac{1}{2}})_{[1:k]}^{[1:k]} 
+X_{k}=U^{[1:k]}(G_{2}^{\frac{1}{2}})_{[1:k]}^{[1:k]}\\ 
+con\ k=2
 $$
 
 ```{r reduccion}
@@ -158,11 +163,11 @@ Xk[1:5,]
 ## gráfica de datos
 
 ```{r graf}
-plot(Xk, xlim = c(-7, 7), ylim = c(-6, 6.5))
+plot(Xk, xlim = c(-6, 11), ylim = c(-4, 10))
 ```
 
 ## función alterna
-esta es una función de R que genera el mismo proceso que hicimos manualmente, a apartir de la matriz D de distancias:
+"cmds", esta es una función de R que genera el mismo proceso que hicimos manualmente, a apartir de la matriz D de distancias y tiene como output la matriz Xk que generamos en el paso anterior:
 
 ```{r alterna}
 ## alternative: 
@@ -175,10 +180,8 @@ plot(cmds)
 ## Calidad de los datos
 con esta métrica tratamos de ver cual es la calidad de los datos:
 $$
-
-M={\frac{\sum_{i=1}^{132}\lambda_{i}}{tr(B)}} \\ 
+M={\frac{\sum_{i=1}^{134}\lambda_{i}}{tr(B)}} \\ 
 con\  \lambda_{i}\ los\ eigenvalores\ de\ B\ i.e.\ los\ elementos\ de\ la\ matriz\ G_{2}
-
 $$
 
 ```{r calidad}
@@ -186,6 +189,7 @@ $$
 M<-sum(diag(G2))/sum(diag(B))
 M
 ```
+donde podemos ver que la calidad es prácticamente perfecta. 
 
 Agregamos los partidos al dataframe que se genara a partir de Xk
 
@@ -193,38 +197,29 @@ Agregamos los partidos al dataframe que se genara a partir de Xk
 ```{r partidos}
 ## creamos un dataframe de las 2 dimensiones
 mds<-as.data.frame(cmds)
-mds[1:3,]
-##ordenamos los nombres de los senadores por nombre y apellidos
-firstname = sapply(strsplit(rownames(mds), ' '), function(x) {if (is.na(x[4])) {return (x[3])} else if(is.na(x[5])){return (paste(x[3],x[4]))}
-  else if(is.na(x[6])){return(paste(x[3],x[4],x[5]))} else if(is.na(x[7])){return(paste(x[3],x[4],x[5],x[6]))}})
-
-lastname1 = sapply(strsplit(rownames(mds), ' '), function(x) x[1]) 
-lastname2 = sapply(strsplit(rownames(mds), ' '), function(x) x[2])
-mds$SENADOR<-paste(firstname,lastname1,lastname2,sep=" ")
-
-##generamos el catálogo de senadores y partidos
-prt<-unique(part[,2:3])
-
-##pegamos el partido al dataframe mds
-fin<-merge(x = mds, y = prt, by = "SENADOR", all.x = TRUE)
-fin[11,]$PARTIDO<-'PRI'
-fin[15,]$PARTIDO<-'PAN'
-fin[20,]$PARTIDO<-'PAN'
-fin[57,]$PARTIDO<-'PRI'
-fin[69,]$PARTIDO<-'PRI'
-fin[104,]$PARTIDO<-'PAN'
-fin[109,]$PARTIDO<-'PRD'
-fin[120,]$PARTIDO<-'PT'
-fin[131,]$PARTIDO<-'PRI'
+mds$SENADOR<-rownames(cmds)
+fin<-merge(x = mds, y = senado_partidos, by = "SENADOR", all.x = TRUE)
 
 ```
 
-##GRAFICO 
+##GRÁFICO 
 Graficamos a los senadores por distinguidos por su partido en las 2 primeras dimensiones:
 ```{r grafico}
-library('ggplot2')
-pl<-ggplot(fin, aes(x=V1, y=-V2,text = paste(SENADOR))) + geom_point(aes(color=PARTIDO)) + 
-  scale_color_manual(values=c("blue", "yellow", "green","red","orange","gray","black"))
+library(ggplot2)
+pl<-ggplot(fin, aes(x=V1, y=V2,text = paste(SENADOR))) + geom_point(aes(color=PARTIDO)) + 
+  scale_color_manual(values=c("blue", "yellow", "green","red","orange","gray","black"))+
+  geom_vline(xintercept = 0)+geom_hline(yintercept = 0)
 
 print(pl)
 ```
+sobre la metodología podemos ver que las 2 primeras dimensiones explican el 32% de la varianza de los datos esto lo podemos calcular con la siguiente expresión:
+$$
+{\frac{\lambda_1+\lambda_{2}}{\sum_{i=1}^{134}\lambda_{i}}}\\
+con\ \lambda_{i}\ el\ i-ésimo\ eigenvalor\ de\ B
+$$
+```{r grafico}
+Var<-(G2[1,1]+G2[2,2])/sum(diag(G2))
+Var
+```
+
+conclusiones de los datos....
